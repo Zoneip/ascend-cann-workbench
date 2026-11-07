@@ -1,0 +1,58 @@
+# 工作区：临时文件全部忽略，只保留目录占位
+/workspace/**
+!/workspace/.gitkeep
+/forks/**
+!/forks/.gitkeep
+/repos/**
+!/repos/.gitkeep
+/models/**
+!/models/.gitkeep
+
+# 历史本地草案：含未核结论，保留但不发布
+/docs/research/
+/docs/operations/
+/docs/structure.md
+/rules/
+/specs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv*/
+venv/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# 密钥与凭据（任何位置）
+.env
+.env.*
+*token*
+*credential*
+*.pem
+*.key
+
+# 大文件与模型产物（任何位置）
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.part
+*.onnx
+*.om
+*.glb
+*.obj
+*.blend
+*.zip
+*.tar
+*.tar.gz
+
+# 系统与编辑器
+.DS_Store
+.idea/
+.vscode/
+*.swp

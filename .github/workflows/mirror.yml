@@ -1,0 +1,46 @@
+name: mirror-main-to-atomgit
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atomgit-main
+  cancel-in-progress: false
+jobs:
+  mirror:
+    if: vars.ATOMGIT_MIRROR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Push main without force or deletion and verify
+        env:
+          ATOMGIT_USER: ${{ secrets.ATOMGIT_USER }}
+          ATOMGIT_TOKEN: ${{ secrets.ATOMGIT_TOKEN }}
+          ATOMGIT_OWNER: ${{ vars.ATOMGIT_OWNER }}
+          ATOMGIT_REPO: ${{ vars.ATOMGIT_REPO }}
+          GIT_TERMINAL_PROMPT: '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${ATOMGIT_USER:?}" && test -n "${ATOMGIT_TOKEN:?}"
+          [[ "${ATOMGIT_OWNER:?}" =~ ^[A-Za-z0-9_.-]+$ ]]
+          [[ "${ATOMGIT_REPO:?}" =~ ^[A-Za-z0-9_.-]+$ ]]
+          umask 077
+          ASKPASS="$(mktemp "$RUNNER_TEMP/askpass.XXXXXX")"
+          trap 'rm -f -- "$ASKPASS"' EXIT
+          printf '%s\n' '#!/bin/sh' 'case "$1" in *Username*) printf "%s\n" "$ATOMGIT_USER" ;; *Password*) printf "%s\n" "$ATOMGIT_TOKEN" ;; *) exit 1 ;; esac' > "$ASKPASS"
+          chmod 700 "$ASKPASS"
+          export GIT_ASKPASS="$ASKPASS"
+          URL="https://atomgit.com/${ATOMGIT_OWNER}/${ATOMGIT_REPO}.git"
+          git push "$URL" HEAD:refs/heads/main
+          ACTUAL="$(git ls-remote "$URL" refs/heads/main | cut -f1)"
+          EXPECTED="$(git rev-parse HEAD)"
+          test "$ACTUAL" = "$EXPECTED"
+          echo "Verified AtomGit main: $EXPECTED"
